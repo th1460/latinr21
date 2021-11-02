@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>slides.knit</title>
+    <meta charset="utf-8" />
+    <script src="libs/header-attrs-2.8/header-attrs.js"></script>
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/rladies-fonts.css" rel="stylesheet" />
+    <script src="libs/core-js-2.5.3/shim.min.js"></script>
+    <script src="libs/react-17.0.0/react.min.js"></script>
+    <script src="libs/react-17.0.0/react-dom.min.js"></script>
+    <script src="libs/reactwidget-1.0.0/react-tools.js"></script>
+    <script src="libs/htmlwidgets-1.5.3/htmlwidgets.js"></script>
+    <script src="libs/reactable-binding-0.2.3/reactable.js"></script>
+    <link rel="stylesheet" href="resources/css/progress.css" type="text/css" />
+    <link rel="stylesheet" href="resources/css/adds.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+
+
+class: inverse, left, middle
+
+background-image: url(resources/images/cover.gif)
+background-size: cover
+
+# IBM Cloud Functions com R
+
+&lt;img src="resources/images/logo-ibm.png" width="150px"/&gt;
+
+.large[Thiago Pires | 12 Nov 2021]
+
+---
+layout: true
+
+background-image: url(resources/images/logo-ibm.png)
+background-position: 97% 3%
+background-size: 7%
+
+---
+class: left middle
+background-color: #00b33c
+
+# Introdução
+
+---
+# Introdução
+
+A computação sem servidor (*serverless computing*) é um recurso útil para executar na nuvem. Tendo como vantagem:
+
+- Menor custo
+- Redução no tempo de gerenciamento
+- Facilidade na configuração e implementação.
+- Escalabilidade
+
+### Function-as-a-Service (FaaS)
+
+&lt;img src="resources/images/faas.png" width="45%" style="display: block; margin: auto;" /&gt;
+
+---
+# Apache OpenWhisk
+
+A plataforma FaaS na IBM Cloud é um recurso para executar código sob demanda com solicitações de API baseadas em HTTP. O IBM Cloud Functions é baseado no projeto de código aberto Apache OpenWhisk.
+
+&lt;img src="resources/images/openwhisk-flow.png" width="50%" style="display: block; margin: auto;" /&gt;
+
+---
+class: left middle
+background-color: #b8b8b8
+
+# Configuração e Deploy
+
+---
+# Configuração
+
+Para criar uma IBM Cloud Function com R é necessário configurar 3 arquivos:
+
+- `exec`: script que irá receber os parâmetros de input e executar um script.R
+- `Dockerfile`: imagem com `openwhisk/dockerskeleton` e instalação do R, dependências e bibliotecas.
+- `script.R`: script que será excutado pela IBM Function com o código em R.
+
+
+### `exec`
+```
+#!/bin/bash# run R script
+chmod +x script.R # turn executable
+echo "$@" &gt; input.json # set input
+./script.R # run script
+```
+
+### `Dockerfile`
+```
+FROM openwhisk/dockerskeleton
+RUN apk update &amp;&amp; apk add R R-dev R-doc build-base
+RUN R -e "install.packages(c('jsonlite', 'tidypredict', 'yaml'), 
+repos = 'http://cran.rstudio.com/')"
+```
+
+---
+# Configuração
+
+### `script.R`
+```
+#!/usr/bin/env Rscript
+
+# carregar modelo
+loaded_model &lt;-
+  tidypredict::as_parsed_model(yaml::read_yaml("my_model.yml"))
+# input
+input &lt;- jsonlite::fromJSON("input.json", flatten = FALSE)
+# calcular predição
+pred &lt;- 
+  tidypredict::tidypredict_to_column(as.data.frame(input), loaded_model)
+# output
+jsonlite::stream_out(pred, verbose = FALSE)
+```
+
+---
+# Deploy
+
+- Foi ajustado um modelo com o banco de dados do Titanic usando a biblioteca `tidymodels`
+
+- Uma regressão logística foi utilizada para classificar os passageiros em sobreviveram ou não sobreviveram ao desastre do Titanic.
+
+- As variáveis selecionadas foram Sexo e Pclass.
+
+
+```r
+library(tidymodels)
+library(magrittr)
+
+lr_mod &lt;- logistic_reg() %&gt;% set_engine("glm")
+lr_fit &lt;- lr_mod %&gt;% fit(Survived ~ Sex + Pclass, data = train_data)
+```
+
+- Salvar o modelo em um arquivo `yaml`
+
+
+```r
+yaml::write_yaml(tidypredict::parse_model(lr_fit),"R/my_model.yml")
+```
+
+---
+# Deploy
+
+Para deploy do modelo são necessários os seguintes passos:
+
+- Build e push para o Docker Hub.
+
+```
+docker build th1460/titanic .
+docker push th1460/titanic
+```
+
+- Logar na IBM Cloud e empacotar os arquivos `exec`, `script.R` e `my_model.yml`.
+
+```
+ibmcloud login
+ibmcloud target --cf
+zip -r titanic.zip exec script.R my_model.yml
+```
+
+- Crie a Função declarando `--web true` para transformá-la em uma API.
+
+```
+ibmcloud fn action create titanic titanic.zip --docker th1460/titanic --web true
+```
+
+---
+class: left middle
+background-color: #fef24e
+
+# Resposta
+
+---
+# Resposta
+
+Para solicitar uma previsão via API, você pode usar a função do pacote `httr`.
+
+
+```r
+input &lt;- list(Sex = "male", Pclass = "3rd")
+"https://&lt;APIHOST&gt;/api/v1/web/&lt;NAMESPACE&gt;/default/titanic.json" %&gt;% 
+httr::POST(., body = input, encode = "json") %&gt;% httr::content() %&gt;% 
+.[c("Sex", "Pclass", "fit")] %&gt;% jsonlite::toJSON(pretty = TRUE, auto_unbox = TRUE)
+```
+
+### Resposta ao *request*:
+
+```
+{"Sex": "male", "Pclass": "3rd", "fit": 0.0979}
+```
+
+---
+class: left middle
+background-color: #6699cc
+
+# Custos e Conclusão
+
+---
+# Custos
+
+O Cloud Functions é eficiente quando altamente utilizado (**escalando sem interrupção até 10000 solicitações paralelas**)
+
+$$
+\text{Taxa básica de custo}=\$0.000017\,\text{GB/s}
+$$
+
+<div id="htmlwidget-e15d89e0ebe2d30f2179" class="reactable html-widget" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-e15d89e0ebe2d30f2179">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Tempo de execução (ms)":[500,500,500,1000,1000,1000],"Memória (MB)":[128,256,512,128,256,512],"Execuções (mês)":[5000000,5000000,5000000,10000000,10000000,10000000],"Custo (mês)":["Grátis","$3.83","$14.45","$14.45","$35.70","$78.20"]},"columns":[{"accessor":"Tempo de execução (ms)","name":"Tempo de execução (ms)","type":"numeric"},{"accessor":"Memória (MB)","name":"Memória (MB)","type":"numeric"},{"accessor":"Execuções (mês)","name":"Execuções (mês)","type":"numeric"},{"accessor":"Custo (mês)","name":"Custo (mês)","type":"character"}],"defaultPageSize":10,"paginationType":"numbers","showPageInfo":true,"minRows":1,"dataKey":"015ce83d719e05771937a23f98faf2fe","key":"015ce83d719e05771937a23f98faf2fe"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+
+
+---
+# Conclusão
+
+A IBM Cloud Function é um recurso incrível para qualquer linguagem de programação. **É fácil de configurar, implantar e escalar.** Se este recurso corresponder às necessidades do seu projeto (disponibilidade, frequência de solicitações, etc). Deve ser uma escolha interessante **executar uma função sem servidor com R em produção.**
+
+---
+class: left middle
+background-color: white
+
+# Demo
+
+---
+class: center middle
+background-color: white
+
+.pull-left[
+# Obrigado
+]
+.pull-right[
+#### github.com/th1460
+#### linkedin.com/in/thop
+#### twitter.com/th14600
+#### th1460.github.io
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"ratio": "16:9",
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"slideNumberFormat": "<div class=\"progress-bar-container\">\n  <div class=\"progress-bar\" style=\"width: calc(%current% / %total% * 100%);\">\n  </div>\n</div>"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

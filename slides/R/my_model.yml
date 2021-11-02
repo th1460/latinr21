@@ -1,0 +1,59 @@
+general:
+  model: glm
+  version: 2.0
+  type: regression
+  residual: 887
+  family: binomial
+  link: logit
+  is_glm: 1.0
+terms:
+- label: (Intercept)
+  coef: 2.2971232
+  is_intercept: 1.0
+  fields:
+  - type: ordinary
+    col: (Intercept)
+  qr:
+    qr_1: -0.0867039
+    qr_2: -0.1047396
+    qr_3: -0.0441165
+    qr_4: -0.1658908
+- label: Sexmale
+  coef: -2.6418754
+  is_intercept: 0.0
+  fields:
+  - type: conditional
+    col: Sex
+    val: male
+    op: equal
+  qr:
+    qr_1: -0.0
+    qr_2: 0.1765135
+    qr_3: -0.0062861
+    qr_4: 0.0519095
+- label: Pclass2nd
+  coef: -0.8379523
+  is_intercept: 0.0
+  fields:
+  - type: conditional
+    col: Pclass
+    val: 2nd
+    op: equal
+  qr:
+    qr_1: -0.0
+    qr_2: -0.0
+    qr_3: 0.2051642
+    qr_4: 0.1334432
+- label: Pclass3rd
+  coef: -1.9054951
+  is_intercept: 0.0
+  fields:
+  - type: conditional
+    col: Pclass
+    val: 3rd
+    op: equal
+  qr:
+    qr_1: 0.0
+    qr_2: 0.0
+    qr_3: 0.0
+    qr_4: 0.214141

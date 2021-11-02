@@ -1,6 +1,7 @@
 ---
 title: "IBM Cloud Functions com R"
 author: Thiago Pires (IBM)
+bibliography: bibliography.bib
 output: pdf_document
 ---
 
@@ -22,7 +23,8 @@ Uma regressão logística foi utilizada para classificar os passageiros em sobre
 
 ```
 library(tidymodels)
-library(magrittr)lr_mod <- logistic_reg() %>% set_engine("glm")
+library(magrittr)
+lr_mod <- logistic_reg() %>% set_engine("glm")
 lr_fit <- lr_mod %>% fit(Survived ~ Sex + Pclass, data = train_data)
 ```
 
@@ -111,4 +113,14 @@ Após a requisição, a saída mostra os parâmetros (Sex e Pclass) e a probabil
 
 ## Conclusão
 
-A IBM Cloud Funcion é um recurso incrível para qualquer linguagem de programação. É fácil de configurar, implantar e escalar. Se este recurso corresponder às necessidades do seu projeto (disponibilidade, frequência de solicitações, etc). Deve ser uma escolha interessante executar uma função sem servidor com R em produção.
+A IBM Cloud Function é um recurso incrível para qualquer linguagem de programação. É fácil de configurar, implantar e escalar. Se este recurso corresponder às necessidades do seu projeto (disponibilidade, frequência de solicitações, etc). Deve ser uma escolha interessante executar uma função sem servidor com R em produção.
+
+Para instalação e configuração pode seguir estes passos em <https://cloud.ibm.com/functions/>. A IBM Cloud fornece a possibilidade de utilizar 5.000.000 execuções no mês com uma conta lite como mostrado em <https://cloud.ibm.com/functions/learn/pricing>. 
+
+## Referência
+
+```{r echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE, comment=NA}
+knitcitations::cleanbib()
+options("citation_format" = "pandoc")
+knitcitations::read.bibtex(file = "bibliography.bib")
+```
