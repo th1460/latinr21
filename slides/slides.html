@@ -3,7 +3,7 @@
   <head>
     <title>slides.knit</title>
     <meta charset="utf-8" />
-    <script src="libs/header-attrs-2.8/header-attrs.js"></script>
+    <script src="libs/header-attrs-2.9/header-attrs.js"></script>
     <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
     <link href="libs/remark-css-0.0.1/rladies-fonts.css" rel="stylesheet" />
     <script src="libs/core-js-2.5.3/shim.min.js"></script>
@@ -84,7 +84,7 @@ Para criar uma IBM Cloud Function com R é necessário configurar 3 arquivos:
 
 ### `exec`
 ```
-#!/bin/bash# run R script
+#!/bin/bash
 chmod +x script.R # turn executable
 echo "$@" &gt; input.json # set input
 ./script.R # run script
@@ -122,7 +122,7 @@ jsonlite::stream_out(pred, verbose = FALSE)
 
 - Foi ajustado um modelo com o banco de dados do Titanic usando a biblioteca `tidymodels`
 
-- Uma regressão logística foi utilizada para classificar os passageiros em sobreviveram ou não sobreviveram ao desastre do Titanic.
+- Uma regressão logística foi utilizada para classificar os passageiros em sobreviventes ou não ao desastre do Titanic.
 
 - As variáveis selecionadas foram Sexo e Pclass.
 
@@ -208,8 +208,8 @@ $$
 \text{Taxa básica de custo}=\$0.000017\,\text{GB/s}
 $$
 
-<div id="htmlwidget-e15d89e0ebe2d30f2179" class="reactable html-widget" style="width:auto;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-e15d89e0ebe2d30f2179">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Tempo de execução (ms)":[500,500,500,1000,1000,1000],"Memória (MB)":[128,256,512,128,256,512],"Execuções (mês)":[5000000,5000000,5000000,10000000,10000000,10000000],"Custo (mês)":["Grátis","$3.83","$14.45","$14.45","$35.70","$78.20"]},"columns":[{"accessor":"Tempo de execução (ms)","name":"Tempo de execução (ms)","type":"numeric"},{"accessor":"Memória (MB)","name":"Memória (MB)","type":"numeric"},{"accessor":"Execuções (mês)","name":"Execuções (mês)","type":"numeric"},{"accessor":"Custo (mês)","name":"Custo (mês)","type":"character"}],"defaultPageSize":10,"paginationType":"numbers","showPageInfo":true,"minRows":1,"dataKey":"015ce83d719e05771937a23f98faf2fe","key":"015ce83d719e05771937a23f98faf2fe"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-7022601cf33e2d0d03e0" class="reactable html-widget" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-7022601cf33e2d0d03e0">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Tempo de execução (ms)":[500,500,500,1000,1000,1000],"Memória (MB)":[128,256,512,128,256,512],"Execuções (mês)":[5000000,5000000,5000000,10000000,10000000,10000000],"Custo (mês)":["Grátis","$3.83","$14.45","$14.45","$35.70","$78.20"]},"columns":[{"accessor":"Tempo de execução (ms)","name":"Tempo de execução (ms)","type":"numeric"},{"accessor":"Memória (MB)","name":"Memória (MB)","type":"numeric"},{"accessor":"Execuções (mês)","name":"Execuções (mês)","type":"numeric"},{"accessor":"Custo (mês)","name":"Custo (mês)","type":"character"}],"defaultPageSize":10,"paginationType":"numbers","showPageInfo":true,"minRows":1,"dataKey":"015ce83d719e05771937a23f98faf2fe","key":"015ce83d719e05771937a23f98faf2fe"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
 
 
 ---

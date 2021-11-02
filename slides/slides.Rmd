@@ -91,7 +91,7 @@ Para criar uma IBM Cloud Function com R é necessário configurar 3 arquivos:
 
 ### `exec`
 ```
-#!/bin/bash# run R script
+#!/bin/bash
 chmod +x script.R # turn executable
 echo "$@" > input.json # set input
 ./script.R # run script
@@ -129,7 +129,7 @@ jsonlite::stream_out(pred, verbose = FALSE)
 
 - Foi ajustado um modelo com o banco de dados do Titanic usando a biblioteca `tidymodels`
 
-- Uma regressão logística foi utilizada para classificar os passageiros em sobreviveram ou não sobreviveram ao desastre do Titanic.
+- Uma regressão logística foi utilizada para classificar os passageiros em sobreviventes ou não ao desastre do Titanic.
 
 - As variáveis selecionadas foram Sexo e Pclass.
 
